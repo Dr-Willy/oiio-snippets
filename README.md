@@ -1,2 +1,2 @@
-# oiio-snippets-
+# oiio-snippets
 Code snippets using OpenImageIO
