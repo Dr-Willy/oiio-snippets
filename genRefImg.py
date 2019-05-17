@@ -4,7 +4,7 @@ import array
 def genArray4(w,h,bpp=16):
     valMax = 2**bpp - 1
     s=1
-    yStep = valMax/(h-1)
+    yStep = float(valMax)/(h-1)
     for j in range(h):
         for i in range(w):
             yield 0
@@ -13,8 +13,8 @@ def genArray4(w,h,bpp=16):
             yield int(j*yStep)
 
 def premultArray4(w,h,buf,bpp=16):
-    valMax = 2**bpp - 1
-    for i in range(1,w*h,4):
+    valMax = float(2**bpp - 1)
+    for i in range(0,4*w*h,4):
         alpha = buf[i+3]/valMax
         buf[i+0] = int(buf[i+0]*alpha)
         buf[i+1] = int(buf[i+1]*alpha)
@@ -34,18 +34,38 @@ def writeTIFF16(filename, data, size=(8,8), attributes={}):
     out.close()
     print filename
 
+def printArray(w,h,buf):
+    for j in range(h):
+        line = list()
+        for i in range(w):
+            offset = 4*(h*j+i)
+            r = buf[offset+0]
+            g = buf[offset+1]
+            b = buf[offset+2]
+            a = buf[offset+3]
+            line.append("(%i,%i,%i,%i)"%(r,g,b,a))
+        print " ".join(line)
+
 def main():
-    references=(("ref_Checker16i_unassociated.tif", {"oiio:UnassociatedAlhpa":1}),
-               ("ref_Checker16i_premult.tif",      {"oiio:anassociatedAlpha":0}))
+    references=(("ref_Checker16i_unassociated.tif", {"oiio:UnassociatedAlpha":1}),
+                ("ref_Checker16i_unassociated_nometadata.tif", {}),
+                ("ref_Checker16i_premult.tif",      {"oiio:UnassociatedAlpha":0}),
+                ("ref_Checker16i_premult_nometadata.tif", {}),
+                )
 
     w=8
     h=8
-    a = array.array('H', genArray4(8,8,16))
-    filename,attribs = references[0]
-    writeTIFF16( filename, a, (w,h), attribs)
 
-    filename,attribs = references[1]
-    writeTIFF16( filename, premultArray4(w,h,a), (w,h), attribs)
+    a = array.array('H', genArray4(8,8,16))
+    for filename,attribs in references[:2]:
+        writeTIFF16( filename, a, (w,h), attribs)
+    printArray(w,h,a)
+
+    premultArray4(w,h,a)
+
+    for filename,attribs in references[2:]:
+        writeTIFF16( filename, a, (w,h), attribs)
+    printArray(w,h,a)
 
 main()
 
